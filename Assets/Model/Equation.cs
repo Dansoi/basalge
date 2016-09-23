@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class Equation : EquationPart {
-	
+
 	public new static Equation parse(string str){
 		Expression left, right;
 		int eqPos = str.IndexOf ('=');
@@ -29,7 +29,7 @@ public class Equation : EquationPart {
 		trn.name = "Left";
 		trn.SetParent (nodeRectTrn);
 
-		Builder.InstantiateAtomic (size, "=").transform.SetParent (nodeRectTrn);
+		Builder.InstantiateTextObj (size, "=").transform.SetParent (nodeRectTrn);
 
 		trn = this [1].Instantiate( size, setNodeTrn).transform;
 		trn.name = "Right";
@@ -40,9 +40,9 @@ public class Equation : EquationPart {
 	}
 
 	public override void workify(){
-		WorkNode.AddAsComponentTo (nodeRectTrn.FindChild ("Left").gameObject, this [0]);
+		wNode.AddAsComponentTo (nodeRectTrn.FindChild ("Left").gameObject, this [0]);
 		EventHandler.AddAsComponentTo(nodeRectTrn.FindChild ("=").gameObject, 0);
-		WorkNode.AddAsComponentTo (nodeRectTrn.FindChild ("Right").gameObject, this [1]);
+		wNode.AddAsComponentTo (nodeRectTrn.FindChild ("Right").gameObject, this [1]);
 	}
 
 	public Equation(Expression l, Expression r){
@@ -56,15 +56,14 @@ public class Equation : EquationPart {
 
 	public override bool Equals(EquationPart other){
 		if (!(other is Equation)) return false;
-		return (this [0].Equals (other [0]) && this [1].Equals (other [1]))
-			|| (this [0].Equals (other [1]) && this [1].Equals (other [0])); //(A=B) should equal (B=A)
+		return this [0].Equals (other [0]) && this [1].Equals (other [1]);
 	}
 
 	public override string ToString () {
 		return this[0].ToString () + "=" + this[1].ToString ();
 	}
 
-	public override EquationPart clone(){
+	public override BasicModel clone(){
 		return new Equation (this[0].clone () as Expression, this[1].clone () as Expression);
 	}
 

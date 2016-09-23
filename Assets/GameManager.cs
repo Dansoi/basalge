@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour {
 		miscbarCam.enabled = false;
 
 		Overview.inst.GetComponent<Canvas> ().worldCamera = fullOverviewCam;
-		Overview.inst.GetComponentInChildren<HolderAxiomsAndExercises>().rulesSetClickable(false);
+		Overview.inst.GetComponentInChildren<ContainerIAxiomIExercise>().rulesSetClickable(false);
 	}
 
 	public void focusExercise(){

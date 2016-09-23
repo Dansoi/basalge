@@ -10,7 +10,7 @@ public class Element : Expression {
 	private char symbol;
 
 	public override GameObject Instantiate(int size, bool setNodeTrn){
-		nodeRectTrn = Builder.InstantiateAtomic (size, this.ToString (), "Element").GetComponent<RectTransform>();
+		nodeRectTrn = Builder.InstantiateTextObj (size, this.ToString (), "Element").GetComponent<RectTransform>();
 		return nodeRectTrn.gameObject;
 	}
 
@@ -67,7 +67,7 @@ public class Element : Expression {
 		return (this.number == otherCasted.number && this.symbol == otherCasted.symbol);
 	}
 
-	public override EquationPart clone(){
+	public override BasicModel clone(){
 		Expression res = new Element (this.number, this.symbol);
 		return res;
 	}

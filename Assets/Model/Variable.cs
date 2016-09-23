@@ -11,7 +11,7 @@ public class Variable : Expression {
 
 
 	public override GameObject Instantiate(int size, bool setNodeTrn ){
-		nodeRectTrn = Builder.InstantiateAtomic (size, this.ToString (), "Variable").GetComponent<RectTransform>();
+		nodeRectTrn = Builder.InstantiateTextObj (size, this.ToString (), "Variable").GetComponent<RectTransform>();
 		return nodeRectTrn.gameObject;
 	}
 
@@ -36,16 +36,34 @@ public class Variable : Expression {
 		res.Add(varName);
 		return res;
 	}
-	public override EquationPart apply(CNDictionary dict){
+
+	public override BasicModel apply(CNDictionary dict, List<ColoredRange> crList, bool useLeafsForRangeIfSameType){
 		if (dict.ContainsKey (varName)) {
 			Expression replacer = dict [varName].clone () as Expression; //Important detail: dict[varname] can be a foster-Sum, where its child has 'incorrect' parent-references. However, clone() will create a new Sum, where its cloned children have correct parent-references.
 			this.replaceWith (replacer);
+			if (crList != null) {
+				
+				if(useLeafsForRangeIfSameType && replacer.GetType() == parent.GetType()) {
+					crList.Add(new ColoredRange(replacer[0], replacer[replacer.Count()-1], getColor(varName)));
+				} else {
+					crList.Add(new ColoredRange(replacer, replacer, getColor(varName)));
+				}
+			}
 			return replacer;
 		} else {
+			if (crList != null) {
+				crList.Add(new ColoredRange(this, this, getColor(varName)));
+			}
 			return this;
 		}
 	}
-
+	
+	public Color getColor(char var){
+		if( var == 'x'){ return Builder.inst.xClr; }
+		if( var == 'y'){ return Builder.inst.yClr; }
+		if( var == 'z'){ return Builder.inst.zClr; }
+		return Color.grey;
+	}
 
 	public override bool Equals(EquationPart other){ //TODO: Examine if this will do. Maybe accept a small error due to using floats?
 		if (!(other is Variable)) {
@@ -73,7 +91,7 @@ public class Variable : Expression {
 		return varName.ToString ();
 	}
 
-	public override EquationPart clone(){
+	public override BasicModel clone(){
 		Expression res = new Variable (varName);
 		return res;
 	}

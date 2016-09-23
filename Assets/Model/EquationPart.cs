@@ -6,14 +6,9 @@ public abstract class EquationPart : BasicModel {
 
 	public BasicModel parent;
 
-	public virtual EquationPart apply (CNDictionary dict) {
-		for(int i = 0; i < childList.Count; ++i){
-			this [i].apply (dict);
-		}
-		return this;
+	public override void makeBackwards(){
+		childList.Reverse ();
 	}
-	//Clones the node itself and descendants, but not ancestors (so the returned node will have parent == null)
-	public abstract EquationPart clone ();
 
 	public abstract bool Equals (EquationPart other); // // // // // // // // // // // // // // // //
 
@@ -64,7 +59,7 @@ public abstract class EquationPart : BasicModel {
 				List<CNDictionary> nodeDictionaries = s.keyNode [s.keyIndex].createDictionariesTo (other [s.keyIndex], returnFirstFound && isLastChild);
 
 				foreach (CNDictionary newDict in nodeDictionaries) {
-					EquationPart newKeyNode = s.keyNode.clone ().apply (newDict); //number of childs remains the same (we're not a Sum or a Variable)
+					EquationPart newKeyNode = (EquationPart) s.keyNode.clone ().apply (newDict); //number of childs remains the same (we're not a Sum or a Variable)
 					bool success = newDict.AddDictionary (s.dict); 
 					Debug.Assert (success); //this shouldn't fail, because their keys should be disjoint
 					stateStack.Push (new State (newDict, newKeyNode, s.keyIndex + 1, s.keyIndex + 1));
@@ -109,24 +104,72 @@ public abstract class EquationPart : BasicModel {
 		return (parent as EquationPart).getRoot ();
 	}
 
-	public List<EquationPart> createNodeListLikeIn(List<EquationPart> reversedNodeList, EquationPart nodeForList){
+	public CRList createColoredRangeListLikeIn(CRList crl, EquationPart nodeForList){
+//		Debug.Log ("called cCRLLI with this: " + this.ToString() + ", nodeForList: " + nodeForList.ToString ());
+//		Debug.Log ("CRList.init: " + crl.init.ToString() + ", CRList: " + toString (crl));
+		List<BasicModel> othersExpressionListReversed = new List<BasicModel> ();
 
-		List<EquationPart> res = new List<EquationPart>();
+		othersExpressionListReversed.Add (crl.init.rangeStart);
 
-		List<EquationPart>.Enumerator thisEnum = childList.GetEnumerator ();
-		List<EquationPart>.Enumerator otherEnum = nodeForList.childList.GetEnumerator ();
+		foreach(ColoredRange c in crl){
+			othersExpressionListReversed.Add (c.rangeStart);
+			othersExpressionListReversed.Add (c.rangeEnd);
+		}
+		if( crl.init.rangeEnd != null) othersExpressionListReversed.Add (crl.init.rangeEnd);
 
-		//Enumerators start out pointing before the first element, så MoveNext must be called once to use it.
-		while (thisEnum.MoveNext() && otherEnum.MoveNext()) {
-			res.AddRange(thisEnum.Current.createNodeListLikeIn (reversedNodeList, otherEnum.Current));
+		othersExpressionListReversed.Reverse ();
+		List<BasicModel> thissExpressionList = this.createNodeListLikeIn (othersExpressionListReversed, nodeForList);
+
+		CRList res = new CRList ();
+		res.init = new ColoredRange(thissExpressionList[0],
+			(crl.init.rangeEnd == null) ? null : thissExpressionList[thissExpressionList.Count-1],
+			crl.init.clr);
+
+		int count = 1;
+		foreach (ColoredRange c in crl) {
+			res.Add (new ColoredRange(thissExpressionList [count], thissExpressionList [count+1], c.clr));
+			count += 2;
 		}
 
+		return res;
+	}
+
+	public string toString(List<ColoredRange> CRList){
+		string res = "";
+		foreach(ColoredRange c in CRList){
+			res += c.ToString () + "|";
+		}
+		return res;
+	}
+	public string toString(List<BasicModel> list){
+		string res = "";
+		foreach(BasicModel c in list){
+			res += c.ToString () + "|";
+		}
+		return res;
+	}
+
+	public List<BasicModel> createNodeListLikeIn(List<BasicModel> reversedNodeList, EquationPart nodeForList){
+//		Debug.Log ("called CNLLI with this: " + this.ToString() + ", reversedNodeList: " + toString(reversedNodeList) + ", nodeForList: " + nodeForList.ToString ());
+
+		List<BasicModel> res = new List<BasicModel>();
+
 		int c = reversedNodeList.Count;
-		while (c > 0 && reversedNodeList[c-1] == nodeForList) {//while because there could be to of the same in row 
+		while (c > 0 && reversedNodeList[c-1] == nodeForList) {//while because there could be several of the same after each other
 			res.Add (this);
 			reversedNodeList.RemoveAt (c - 1);
 			--c;
 		}
+
+		List<EquationPart>.Enumerator thisEnum = childList.GetEnumerator ();
+		List<EquationPart>.Enumerator otherEnum = nodeForList.childList.GetEnumerator ();
+
+
+		//Enumerators start out pointing before the first element, so MoveNext must be called once to use it.
+		while (thisEnum.MoveNext() && otherEnum.MoveNext()) {
+			res.AddRange(thisEnum.Current.createNodeListLikeIn (reversedNodeList, otherEnum.Current));
+		}
+
 
 		return res;
 	}

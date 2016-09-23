@@ -48,7 +48,7 @@ public class Sum : Expression {
 		for (int i = 0; i < childList.Count; i++) {
 
 			// (
-			if (this [i] is Sum) Builder.InstantiateAtomic (size, "(", "Term " + i + " (").transform.SetParent(nodeRectTrn);
+			if (this [i] is Sum) Builder.InstantiateTextObj (size, "(", "Term " + i + " (").transform.SetParent(nodeRectTrn);
 
 			//Add term i
 			trn = this [i].Instantiate( size, setNodeTrn).transform;
@@ -56,11 +56,11 @@ public class Sum : Expression {
 			trn.SetParent (nodeRectTrn);
 
 			//)
-			if (this [i] is Sum) Builder.InstantiateAtomic (size, ")", "Term " + i + " )").transform.SetParent(nodeRectTrn);
+			if (this [i] is Sum) Builder.InstantiateTextObj (size, ")", "Term " + i + " )").transform.SetParent(nodeRectTrn);
 
 			//+
 			if (i < childList.Count - 1) {
-				Builder.InstantiateAtomic (size, "+", "Plus " + i).transform.SetParent (nodeRectTrn);
+				Builder.InstantiateTextObj (size, "+", "Plus " + i).transform.SetParent (nodeRectTrn);
 			}
 
 		}
@@ -76,7 +76,7 @@ public class Sum : Expression {
 			trn = nodeRectTrn.Find ("Term " + i + " (");
 			if (trn != null) EventHandler.AddAsComponentTo(trn.gameObject, i);
 
-			WorkNode.AddAsComponentTo( nodeRectTrn.FindChild ("Term " + i).gameObject, this [i]);
+			wNode.AddAsComponentTo( nodeRectTrn.FindChild ("Term " + i).gameObject, this [i]);
 
 			trn = nodeRectTrn.Find ("Term " + i + " )");
 			if (trn != null) EventHandler.AddAsComponentTo(trn.gameObject, i);
@@ -172,10 +172,10 @@ public class Sum : Expression {
 		return res;
 	}
 
-	public override EquationPart apply(CNDictionary dict){
+	public override BasicModel apply(CNDictionary dict, List<ColoredRange> crList, bool useLeafsForRangeIfSameType){
 		bool relaxSums = Overview.inst.autoAssoc.isChecked ();
 		for(int i = 0; i < Count(); ++i){
-			Expression replacer = this [i].apply (dict) as Expression;
+			Expression replacer = this [i].apply (dict, crList, relaxSums) as Expression;
 			if (replacer is Sum && relaxSums) {
 				replaceTerms (i, 1, replacer);
 				i = i - 1 + replacer.childList.Count;
@@ -201,7 +201,7 @@ public class Sum : Expression {
 	}
 
 	public override string ToString(){
-		string str = "."+this [0].ToString ();
+		string str = this [0].ToString ();
 		for (int i = 1; i < childList.Count; i++) {
 			str += "+" + this [i];
 		}
@@ -220,11 +220,11 @@ public class Sum : Expression {
 		return true;
 	}
 
-	public override EquationPart clone(){
+	public override BasicModel clone(){
 		Debug.Assert (childList.Count >= 2);
 		List<EquationPart> newList = new List<EquationPart> ();
 		foreach (EquationPart c in childList) {
-			newList.Add (c.clone ());
+			newList.Add ((EquationPart) c.clone ());
 		}
 		return new Sum (newList);
 	}

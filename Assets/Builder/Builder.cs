@@ -8,11 +8,22 @@ public class Builder : MonoBehaviour {
 	public static Builder inst; //instance
 	public const float deltaZ = 0f; //consts can be adressed like Builder.deltaZ (they are actually static)
 	public const float spaceBetweenWorklines = 10f;
-	public const int worksheetFontsize = 24;
+	public const int worksheetFontsize = 24; //Hvis denne ændres, så tilpas også Preferred Width i LayoutKomponenten i: Alle tre links (i modsætning til step og usedRule), og begge spacer
+	public const float fadedFactor = 0.5f;
+	public Color xClr = new Color(1f, 0f, 0f);
+	public Color yClr = new Color(199f/255f, 31f/255f, 153f/255f);
+	public Color zClr = new Color (213f/255f, 105f/255f, 30f/255f);
+	public Color fadedClr = new Color (0.5f, 0.5f, 0.5f);
+	public Color emphClr = new Color (1f, 1f, 1f);
+
+
+	public GameObject adaptingRulePrefab;
+	public GameObject assumptionPrefab;
+	public GameObject linkPrefab;
+	public GameObject exerciseRulePrefab;
 
 	public GameObject dummyObj;
 	public GameObject textObj;
-	public GameObject adaptingRulePrefab;
 
 	void Awake(){
 		inst = this;
@@ -26,8 +37,8 @@ public class Builder : MonoBehaviour {
 		return obj;
 	}
 
-	//Initiate Atomic, set text, fontsize and transform size, and set name
-	public static GameObject InstantiateAtomic(int size, string text, string name = ""){
+	//Initiate textObj, set text, fontsize and transform size, and set name
+	public static GameObject InstantiateTextObj(int size, string text, string name = ""){
 		GameObject obj = Instantiate (inst.textObj);
 		obj.GetComponent<Text> ().text = text;
 		obj.GetComponent<Text> ().fontSize = size;
@@ -60,12 +71,15 @@ public class Builder : MonoBehaviour {
 		}
 	}
 
-	public static void emphasizeRange(EquationPart firstInRange, EquationPart lastInRange, Color clr){
+	public static void emphasizeRange(BasicModel firstInRange, BasicModel lastInRange, Color clr, bool emphasizeOuterparentheses = false){
+		if (lastInRange == null) lastInRange = firstInRange;
+
 		if (!(firstInRange is Expression)) {
 			Debug.Assert (firstInRange == lastInRange);
 			emphasize (firstInRange.nodeRectTrn, clr);
 			return;
 		}
+
 		Expression _firstInRange = firstInRange as Expression;
 		Expression _lastInRange = lastInRange as Expression;
 
@@ -73,6 +87,21 @@ public class Builder : MonoBehaviour {
 		if(_firstInRange == _lastInRange){
 			emphasize (_firstInRange.nodeRectTrn, clr);
 
+			if (emphasizeOuterparentheses && _firstInRange.parent is Expression) {
+				if(_firstInRange.parent is Sum){
+					Sum parent = (Sum)_firstInRange.parent;
+					int index = _firstInRange.indexNo ();
+					emphasize (parent.nodeRectTrn.FindChild ("Term "+index+" ("), clr);
+					emphasize (parent.nodeRectTrn.FindChild ("Term "+index+" )"), clr);
+				} else {
+					Debug.Assert(_firstInRange.parent is Negative);
+					Negative parent = (Negative)_firstInRange.parent;
+					emphasize (parent.nodeRectTrn.FindChild ("("), clr);
+					emphasize (parent.nodeRectTrn.FindChild (")"), clr);
+
+				}
+			
+			}
 		} else {
 			Sum parent = _firstInRange.parent as Sum;
 			int i = _firstInRange.indexNo ();
@@ -91,6 +120,8 @@ public class Builder : MonoBehaviour {
 			} 
 
 		}
+
+			
 	}
 
 }

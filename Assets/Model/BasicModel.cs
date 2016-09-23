@@ -7,16 +7,26 @@ public abstract class BasicModel {
 	public List<EquationPart> childList;
 	public RectTransform nodeRectTrn;
 
+	public virtual BasicModel apply (CNDictionary dict, List<ColoredRange> crList = null, bool useLeafsForRangeIfSameType = false) {
+		for(int i = 0; i < childList.Count; ++i){
+			this [i].apply (dict, crList);
+		}
+		return this;
+	}
+
+	//Clones the node itself and descendants, but not ancestors (so the returned node will have parent == null)
+	public abstract BasicModel clone ();
+
+
 	public int Count(){
 		return childList.Count;
 	}
 
 	public static BasicModel parse(string str){
-		int arrowPos = str.IndexOf ("=>");
-		if (arrowPos == -1) {
-			return Equation.parse (str);
-		} else {
+		if (str.IndexOf ("<=>") >= 0 || str.IndexOf ("==>") >= 0 || str.IndexOf ("<==") >= 0) {
 			return Implication.parse (str);
+		} else {
+			return Equation.parse (str);
 		}
 	}
 	public abstract GameObject Instantiate (int size, bool setNodeTrn = false);
@@ -42,4 +52,7 @@ public abstract class BasicModel {
 		nodeRectTrn.sizeDelta = new Vector2 (widthUntilNow, maxHeight);
 	}
 
+
+	/// I dont like this..:
+	public abstract void makeBackwards();
 }

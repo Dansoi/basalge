@@ -30,15 +30,15 @@ public class Negative : Expression {
 
 		bool innerP = (this[0] is Negative || this[0] is Sum);
 
-		if (innerP) Builder.InstantiateAtomic (size, "(").transform.SetParent (nodeRectTrn);
+		if (innerP) Builder.InstantiateTextObj (size, "(").transform.SetParent (nodeRectTrn);
 
 		trn = this [0].Instantiate(size, setNodeTrn).transform;
 		trn.name = "Inner";
 		trn.SetParent (nodeRectTrn);
 
-		if (innerP) Builder.InstantiateAtomic (size, ")").transform.SetParent (nodeRectTrn);
+		if (innerP) Builder.InstantiateTextObj (size, ")").transform.SetParent (nodeRectTrn);
 
-		Builder.InstantiateAtomic (size, "'").transform.SetParent (nodeRectTrn);
+		Builder.InstantiateTextObj (size, "'").transform.SetParent (nodeRectTrn);
 
 		putTransformsSideBySide (size);
 		return nodeRectTrn.gameObject;
@@ -46,7 +46,7 @@ public class Negative : Expression {
 
 
 	public override void workify(){
-		WorkNode.AddAsComponentTo (nodeRectTrn.FindChild ("Inner").gameObject, this [0]);
+		wNode.AddAsComponentTo (nodeRectTrn.FindChild ("Inner").gameObject, this [0]);
 		EventHandler.AddAsComponentTo(nodeRectTrn.FindChild ("'").gameObject, 0);
 
 		Transform leftP = nodeRectTrn.FindChild ("(");
@@ -65,7 +65,7 @@ public class Negative : Expression {
 		return this[0].Equals (other[0]);
 	}
 
-	public override EquationPart clone(){
+	public override BasicModel clone(){
 		return new Negative (this[0].clone() as Expression);
 	}
 
